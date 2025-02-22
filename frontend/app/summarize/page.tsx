@@ -8,53 +8,93 @@ export default function SummarizePage() {
   const [segments, setSegments] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
     if (!videoUrl.trim()) return;
     setLoading(true);
-
-    try {
-      const response = await fetch("http://127.0.0.1:5000/process", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ link: videoUrl }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch summary");
+    setSegments([]); // Clear previous segments
+  
+    const eventSource = new EventSource(`http://127.0.0.1:5000/process?link=${encodeURIComponent(videoUrl)}`);
+  
+    eventSource.onmessage = (event) => {
+      if (event.data === "done") {
+        eventSource.close();
+        setLoading(false);
+        return;
       }
-
-      const data = await response.json();
-      setSegments(data.segments || []);
-    } catch (error) {
-      console.error("Error:", error);
-      setSegments([]);
-    } finally {
+  
+      const newSegment = JSON.parse(event.data);
+      setSegments((prevSegments) => [...prevSegments, newSegment]);
+    };
+  
+    eventSource.onerror = () => {
+      eventSource.close();
       setLoading(false);
-    }
+      console.error("Error fetching data");
+    };
   };
 
-  /**
-   * Generates a PDF from the summarized segments.
-   */
   const generatePDF = () => {
     const doc = new jsPDF();
-
-    // Add a title to the PDF
+  
+    // Set initial position
+    let x = 10; // X position (left margin)
+    let y = 20; // Y position (starting from the top)
+  
+    // Set font size for the title
     doc.setFontSize(18);
-    doc.text("Video Summary", 10, 10);
-
+    doc.text("Video Summary", x, y);
+    y += 10; // Move down after the title
+  
+    // Set font size for the content
+    doc.setFontSize(12);
+  
+    // Helper function to wrap text
+    const wrapText = (text, maxWidth) => {
+      const words = text.split(" ");
+      let lines = [];
+      let currentLine = words[0];
+  
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = doc.getTextWidth(currentLine + " " + word);
+        if (width < maxWidth) {
+          currentLine += " " + word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      lines.push(currentLine);
+      return lines;
+    };
+  
     // Add each segment to the PDF
-    let yPosition = 20; // Starting Y position for content
     segments.forEach((segment, index) => {
-      doc.setFontSize(12);
-      doc.text(`Segment ${index + 1}: ${segment.title}`, 10, yPosition);
-      yPosition += 10;
-      doc.text(`Summary: ${segment.summary}`, 10, yPosition);
-      yPosition += 10;
-      doc.text(`Timestamp: ${segment.timestamp}`, 10, yPosition);
-      yPosition += 15; // Add extra space between segments
+      // Add segment title
+      doc.text(`Segment ${index + 1}: ${segment.title}`, x, y);
+      y += 10; // Move down after the title
+  
+      // Wrap and add the summary
+      const summaryLines = wrapText(`Summary: ${segment.summary}`, 180); // 180 is the max width
+      summaryLines.forEach((line) => {
+        if (y > 280) {
+          // Add a new page if the current page is full
+          doc.addPage();
+          y = 20; // Reset Y position for the new page
+        }
+        doc.text(line, x, y);
+        y += 10; // Move down after each line
+      });
+  
+      // Add timestamp
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(`Timestamp: ${segment.timestamp}`, x, y);
+      y += 15; // Add extra space between segments
     });
-
+  
     // Save the PDF
     doc.save("video-summary.pdf");
   };
@@ -117,7 +157,6 @@ export default function SummarizePage() {
               </div>
             ) : segments.length > 0 ? (
               <>
-                {/* Add a Download PDF Button */}
                 <button
                   onClick={generatePDF}
                   className="bg-violet-600 hover:bg-violet-700 px-4 py-2 rounded-md mb-4"
@@ -125,7 +164,6 @@ export default function SummarizePage() {
                   Download PDF
                 </button>
 
-                {/* Display Segments */}
                 {segments.map((segment, index) => (
                   <div key={index} className="mb-4">
                     <div className="flex justify-center items-center">

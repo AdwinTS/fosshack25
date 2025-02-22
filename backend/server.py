@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response, stream_with_context
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
 from deep_translator import GoogleTranslator
 from transformers import T5ForConditionalGeneration, T5Tokenizer
@@ -10,10 +10,10 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from collections import Counter
 from flask_cors import CORS
+import json
 
 app = Flask(__name__)
 CORS(app)
-
 
 # Load AI models
 T5_MODEL_NAME = "t5-base"
@@ -47,6 +47,7 @@ def generate_heading(text):
     # Generate heading
     heading = " ".join(top_words).title()
     return heading if heading else "No Keywords Found"
+
 def fetch_transcript(youtube_url, supported_languages=["en", "hi", "es", "fr", "ml"], target_language="en"):
     """Fetches the transcript for a given YouTube video, translates if needed, and returns a timestamped dictionary."""
     try:
@@ -152,12 +153,16 @@ def convert_timestamp_to_seconds(timestamp):
         return minutes * 60 + seconds
     return None
 
-@app.route("/process", methods=["POST"])
+@app.route("/process", methods=["GET", "POST"])
 def process_youtube_video():
     """Processes a YouTube video link to generate segmented summaries with timestamps."""
     try:
-        request_data = request.get_json()
-        youtube_link = request_data.get("link")
+        if request.method == "POST":
+            request_data = request.get_json()
+            youtube_link = request_data.get("link")
+        elif request.method == "GET":
+            youtube_link = request.args.get("link")
+
         print("Received link:", youtube_link)
         if "v=" not in youtube_link:
             return jsonify({"error": "Invalid YouTube link."}), 400
@@ -167,21 +172,22 @@ def process_youtube_video():
             return jsonify({"error": error}), 400
 
         segmented_transcripts = split_transcript(transcript)
-        summarized_results = []
 
-        for timestamp, segment_text in segmented_transcripts:
-            segment_title = generate_heading(segment_text)
-            segment_summary = summarize_text(segment_text)
-            print(segment_summary)
-            video_timestamp_link = youtube_link + "&t=" + str(convert_timestamp_to_seconds(timestamp)) + "s"
-            summarized_results.append({
-                "link": video_timestamp_link,
-                "timestamp": timestamp,
-                "title": segment_title,
-                "summary": segment_summary
-            })
+        def generate():
+            for timestamp, segment_text in segmented_transcripts:
+                segment_title = generate_heading(segment_text)
+                segment_summary = summarize_text(segment_text)
+                video_timestamp_link = youtube_link + "&t=" + str(convert_timestamp_to_seconds(timestamp)) + "s"
+                result = {
+                    "link": video_timestamp_link,
+                    "timestamp": timestamp,
+                    "title": segment_title,
+                    "summary": segment_summary
+                }
+                yield f"data: {json.dumps(result)}\n\n"
+            yield "data: done\n\n"
 
-        return jsonify({"segments": summarized_results})
+        return Response(stream_with_context(generate()), content_type="text/event-stream")
     except Exception as e:
         return jsonify({"error": "Internal server error: " + str(e)}), 500
 
