@@ -4,20 +4,20 @@ import { ArrowRight } from "lucide-react"
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 relative z-10">
         <nav className="flex justify-between items-center mb-16">
           <h1 className="text-2xl font-bold text-violet-400">VideoSummarizer</h1>
           <div className="space-x-4">
-            <Link href="/login" className="text-violet-400 hover:text-violet-300">
+            <Link href="/login" className="text-violet-400 hover:text-violet-300 transition-colors">
               Login
             </Link>
-            <Link href="/signup" className="text-violet-400 hover:text-violet-300">
+            <Link href="/signup" className="text-violet-400 hover:text-violet-300 transition-colors">
               Sign Up
             </Link>
           </div>
         </nav>
         <main className="flex flex-col items-center text-center">
-          <h2 className="text-6xl font-bold mb-6 bg-gradient-to-r from-violet-400 to-purple-600 bg-clip-text text-transparent">
+          <h2 className="text-6xl font-bold mb-6 bg-gradient-to-r from-violet-400 to-purple-600 bg-clip-text text-transparent animate-pulse">
             Summarize Your Videos
           </h2>
           <p className="text-xl mb-12 max-w-2xl">
@@ -26,7 +26,7 @@ export default function LandingPage() {
           </p>
           <Link
             href="/summarize"
-            className="group relative inline-flex items-center justify-center px-8 py-3 overflow-hidden font-medium text-violet-600 bg-violet-100 rounded-lg shadow-2xl"
+            className="group relative inline-flex items-center justify-center px-8 py-3 overflow-hidden font-medium text-violet-600 bg-violet-100 rounded-lg shadow-2xl hover:scale-105 transition-all duration-300 ease-out hover:shadow-violet-500/50"
           >
             <span className="absolute inset-0 w-full h-full transition duration-300 ease-out opacity-0 bg-gradient-to-br from-violet-600 via-purple-600 to-violet-800 group-hover:opacity-100"></span>
             <span className="absolute top-0 left-0 w-full bg-gradient-to-b from-white to-transparent opacity-5 h-1/3"></span>
