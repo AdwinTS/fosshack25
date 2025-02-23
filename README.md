@@ -1,11 +1,7 @@
-Since your project includes **Next.js as the frontend** along with Flask, here's an updated **README.md** to reflect the full-stack nature of your summarization project.  
+# 🎥 YouTube Video Summarizer
 
----
-
-# 🎥 YouTube Video Summarizer  
-
-## 📌 Overview  
-This is a **full-stack application** that extracts, summarizes, and translates **YouTube video transcripts**.  
+## 📌 Overview
+This is a **full-stack application** that extracts, summarizes, and translates **YouTube video transcripts**.
 
 ✅ Fetch **YouTube video transcripts**  
 ✅ Generate **summarized key points**  
@@ -31,8 +27,8 @@ Built using:
 
 1️⃣ **Clone the repository**  
    ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo/backend
+   git clone https://github.com/prithvi1236/fosshack25.git
+   cd fosshack25/backend
    ```  
 
 2️⃣ **Install dependencies**  
@@ -144,3 +140,4 @@ MIT License
 ---
 
 This README now properly reflects both **Flask backend** and **Next.js frontend**, highlighting the **real-time summarization & PDF generation features**. 🚀 Let me know if you'd like any refinements!
+
