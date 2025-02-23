@@ -1,10 +1,11 @@
-from flask import Flask, request, jsonify, Response, stream_with_context
+from flask import Flask, request, jsonify
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
 from deep_translator import GoogleTranslator
 import re
 from flask_cors import CORS
 import json
 import requests
+from fuzzywuzzy import fuzz
 
 app = Flask(__name__)
 CORS(app)
@@ -45,7 +46,7 @@ def fetch_transcript(youtube_url, supported_languages=["en", "hi", "es", "fr", "
         return None, "Transcripts are disabled for this video."
     except Exception as e:
         return None, f"Error fetching transcript: {e}"
-
+    
 def convert_timestamp_to_seconds(timestamp):
     """Converts a timestamp string (MM:SS) into total seconds."""
     match = re.match(r"(\d+):(\d+)", timestamp)
@@ -53,6 +54,33 @@ def convert_timestamp_to_seconds(timestamp):
         minutes, seconds = map(int, match.groups())
         return minutes * 60 + seconds
     return None
+def find_timestamp_for_heading(heading, explanation, transcript):
+    """
+    Finds the starting timestamp for a given heading and explanation by matching the content
+    with the transcript using fuzzy matching.
+    """
+    # Combine heading and explanation for better matching
+    search_text = f"{heading} {explanation}".lower()
+
+    best_match = None
+    best_score = 0
+
+    # Iterate through the transcript to find the best match
+    for timestamp, text in transcript.items():
+        # Calculate the similarity ratio between the search text and transcript text
+        score = fuzz.partial_ratio(search_text, text.lower())
+        
+        # Update the best match if the current score is higher
+        if score > best_score:
+            best_score = score
+            best_match = timestamp
+
+        # If we find a perfect match, return immediately
+        if best_score == 100:
+            return best_match
+
+    # Return the best match if the score is above a threshold (e.g., 70)
+    return best_match if best_score >= 70 else None
 
 @app.route("/process", methods=["POST", "GET"])
 def process_youtube_video():
@@ -80,7 +108,7 @@ def process_youtube_video():
         print("Formatted transcript:", formatted_transcript)
 
         # Define payload for Ollama API
-        url = "http://localhost:11435/api/generate"  # Updated endpoint
+        url = "http://localhost:11435/api/generate"
         payload = {
             "model": "mistral",
             "prompt": f"""
@@ -134,6 +162,19 @@ def process_youtube_video():
 
             # Ensure "sections" exist in the response
             if isinstance(response_json, dict) and "sections" in response_json:
+                # Add timestamps to each section
+                for section in response_json["sections"]:
+                    timestamp = find_timestamp_for_heading(
+                        section["heading"],
+                        section["explanation"],
+                        transcript
+                    )
+                    if timestamp:
+                        section["timestamp"] = timestamp
+                        section["link"]=youtube_link+"&t="+str(convert_timestamp_to_seconds(timestamp))
+                    else: 
+                        section["timestamp"] = "N/A"
+
                 return jsonify({"sections": response_json["sections"], "status": "success"}), 200
             else:
                 return jsonify({"error": "Invalid response format from AI model"}), 500

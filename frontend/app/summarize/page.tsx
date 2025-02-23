@@ -157,9 +157,17 @@ export default function SummarizePage() {
 
                 {sections.map((section, index) => (
                   <div key={index} className="mb-4">
-                    <h3 className="text-lg font-semibold text-violet-300">
+                    <div className="flex justify-center items-center">
+                      <a href={section.link}>
+                        <h3 className="text-lg font-semibold text-violet-300">
+                          {section.heading}
+                        </h3>
+                      </a>
+                    </div>
+                    
+                    {/* <h3 className="text-lg font-semibold text-violet-300">
                       {section.heading}
-                    </h3>
+                    </h3> */}
                     <p className="text-gray-300">{section.explanation}</p>
                   </div>
                 ))}
