@@ -5,10 +5,25 @@ import re
 from flask_cors import CORS
 import json
 import requests
+import yt_dlp
 from fuzzywuzzy import fuzz
 
 app = Flask(__name__)
 CORS(app)
+
+
+
+def get_youtube_title(url):
+    ydl_opts = {
+        'quiet': True,
+        'skip_download': True,  # We just want metadata
+        'extract_flat': True,
+        'force_generic_extractor': True,
+    }
+    
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        return info.get("title", "Title not found")
 
 def fetch_transcript(youtube_url, supported_languages=["en", "hi", "es", "fr", "ml"], target_language="en"):
     """Fetches the transcript for a given YouTube video, translates if needed, and returns a timestamped dictionary."""
@@ -46,7 +61,7 @@ def fetch_transcript(youtube_url, supported_languages=["en", "hi", "es", "fr", "
         return None, "Transcripts are disabled for this video."
     except Exception as e:
         return None, f"Error fetching transcript: {e}"
-    
+
 def convert_timestamp_to_seconds(timestamp):
     """Converts a timestamp string (MM:SS) into total seconds."""
     match = re.match(r"(\d+):(\d+)", timestamp)
@@ -54,6 +69,7 @@ def convert_timestamp_to_seconds(timestamp):
         minutes, seconds = map(int, match.groups())
         return minutes * 60 + seconds
     return None
+    
 def find_timestamp_for_heading(heading, explanation, transcript):
     """
     Finds the starting timestamp for a given heading and explanation by matching the content
@@ -96,12 +112,18 @@ def process_youtube_video():
         if "v=" not in youtube_link:
             return jsonify({"error": "Invalid YouTube link."}), 400
 
+        # Fetch the transcript
         transcript, error = fetch_transcript(youtube_link)
+        print("transcript", transcript)
         if error:
             return jsonify({"error": error}), 400
 
         if not transcript:
             return jsonify({"error": "No transcript available."}), 400
+
+        # Fetch the video title
+        video_title = get_youtube_title(youtube_link)
+        print("video", video_title)
 
         # Format the transcript
         formatted_transcript = "\n".join([f"{timestamp}: {text}" for timestamp, text in transcript.items()])
@@ -162,20 +184,26 @@ def process_youtube_video():
 
             # Ensure "sections" exist in the response
             if isinstance(response_json, dict) and "sections" in response_json:
-                # Add timestamps to each section
+                # Add timestamps and links to each section
                 for section in response_json["sections"]:
                     timestamp = find_timestamp_for_heading(
                         section["heading"],
                         section["explanation"],
                         transcript
                     )
+                    print("Timestamp:", timestamp)
                     if timestamp:
                         section["timestamp"] = timestamp
-                        section["link"]=youtube_link+"&t="+str(convert_timestamp_to_seconds(timestamp))
-                    else: 
+                        section["link"] = f"{youtube_link}&t={convert_timestamp_to_seconds(timestamp)}"
+                        print(section["link"])
+                    else:
                         section["timestamp"] = "N/A"
+                        section["link"] = youtube_link
 
-                return jsonify({"sections": response_json["sections"], "status": "success"}), 200
+                # Add the video title to the response
+                response_json["title"] = video_title
+
+                return jsonify(response_json), 200
             else:
                 return jsonify({"error": "Invalid response format from AI model"}), 500
 
