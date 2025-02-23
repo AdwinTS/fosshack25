@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { io } from "socket.io-client";
 import jsPDF from "jspdf";
 
 export default function SummarizePage() {
@@ -8,33 +9,35 @@ export default function SummarizePage() {
   const [sections, setSections] = useState([]);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+  const [socket, setSocket] = useState(null);
 
-  const handleGenerate = async () => {
+  useEffect(() => {
+    const newSocket = io("http://127.0.0.1:5000");
+    setSocket(newSocket);
+
+    newSocket.on("status", (data) => setStatus(data.message));
+    newSocket.on("summary", (data) => {
+      setTitle(data.title);
+      setSections(data.sections);
+      setLoading(false);
+    });
+    newSocket.on("error", (data) => {
+      setError(data.error);
+      setLoading(false);
+    });
+
+    return () => newSocket.disconnect();
+  }, []);
+
+  const handleGenerate = () => {
     if (!videoUrl.trim()) return;
     setLoading(true);
+    setStatus("Connecting to server...");
+    setError("");
 
-    try {
-      const response = await fetch("http://127.0.0.1:5000/process", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ link: videoUrl }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch summary");
-      }
-
-      const data = await response.json();
-      setSections(data.sections || []);
-      setTitle(data.title || "");
-    } catch (error) {
-      console.error("Error:", error);
-      setSections([]);
-      setTitle("");
-    } finally {
-      setLoading(false);
-      console.log(sections);
-    }
+    socket.emit("process_video", { link: videoUrl });
   };
 
   const generatePDF = () => {
@@ -46,14 +49,18 @@ export default function SummarizePage() {
     doc.setFontSize(12);
 
     sections.forEach((section, index) => {
-      doc.text(`Section ${index + 1}: ${section.heading}`, 10, y);
-      y += 10;
-      doc.text(section.explanation, 10, y, { maxWidth: 180 });
-      y += 20;
+        const headingText = `${index + 1}: ${section.heading}`;
+        doc.setTextColor(0, 0, 255); // Set color for the link
+        doc.textWithLink(headingText, 10, y, { url: section.link });
+        y += 10;
+        doc.setTextColor(0, 0, 0); // Reset color
+        doc.text(section.explanation, 10, y, { maxWidth: 180 });
+        y += 20;
     });
 
     doc.save("video-summary.pdf");
-  };
+};
+
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -84,6 +91,9 @@ export default function SummarizePage() {
             <h2 className="text-2xl font-semibold mb-4 text-violet-300">
               {title || "Summary"}
             </h2>
+
+            {status && <p className="text-gray-400">{status}</p>}
+            {error && <p className="text-red-400">{error}</p>}
 
             {loading ? (
               <div className="flex items-center justify-center h-32">

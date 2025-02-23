@@ -3,6 +3,19 @@ import Link from "next/link"
 import { ArrowRight, Play, Radius } from "lucide-react"
 import { motion } from "framer-motion"
 
+/**
+ * Renders the landing page for the VideoSummarizer application.
+ * 
+ * The page features:
+ * - A navigation bar with links to login and signup.
+ * - A main section with a title, description, and a call-to-action button leading to the summarize page.
+ * - Animated feature tiles showcasing the application's capabilities.
+ * - User testimonials section to provide social proof and feedback.
+ * - A footer with branding and a link to the GitHub repository.
+ * 
+ * The page is styled with gradients, animations, and responsive layouts.
+ */
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-violet-900 text-white flex flex-col">
