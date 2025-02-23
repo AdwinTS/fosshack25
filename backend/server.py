@@ -192,6 +192,7 @@ def process_youtube_video():
                         transcript
                     )
                     print("Timestamp:", timestamp)
+                    print("section",section)
                     if timestamp:
                         section["timestamp"] = timestamp
                         section["link"] = f"{youtube_link}&t={convert_timestamp_to_seconds(timestamp)}"
