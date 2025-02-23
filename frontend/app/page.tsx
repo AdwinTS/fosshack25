@@ -2,6 +2,8 @@
 import Link from "next/link"
 import { ArrowRight, Play, Radius } from "lucide-react"
 import { motion } from "framer-motion"
+import { FaGithub } from "react-icons/fa";
+
 
 /**
  * Renders the landing page for the VideoSummarizer application.
@@ -22,14 +24,10 @@ export default function LandingPage() {
       <div className="container mx-auto px-4 py-8 flex-grow">
         {/* Navbar */}
         <nav className="flex justify-between items-center mb-16">
-          <h1 className="text-2xl font-bold text-violet-400">VideoSummarizer</h1>
+        <img src="logo.jpg" alt="Logo" className="w-[120px] h-[120px] rounded-full" />
+
           <div className="space-x-4">
-            <Link href="/login" className="text-violet-400 hover:text-violet-300">
-              Login
-            </Link>
-            <Link href="/signup" className="text-violet-400 hover:text-violet-300">
-              Sign Up
-            </Link>
+            
           </div>
         </nav>
         <main className="flex flex-col items-center text-center">
@@ -99,12 +97,12 @@ export default function LandingPage() {
             {[
               {
                 name: "Adwin",
-                role: "9 years old ",
+                role: "College Student ",
                 quote: "VideoSummarizer has revolutionized my content research process. It's a game-changer!",
               },
               {
                 name: " Pranav J",
-                role: "Zen Master Thantha",
+                role: "IT Professional",
                 quote:
                   "I can now quickly grasp key concepts from lecture videos. It's boosted my study efficiency tremendously.",
               },
@@ -121,22 +119,25 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="mt-24 bg-violet-900/50 backdrop-blur-md py-12">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
-          <div className="text-center md:text-left mb-8 md:mb-0">
-            <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-600 mb-2">
-              VideoSummarizer
-            </h3>
-            <p className="text-violet-300">Transforming video content into actionable insights</p>
-          </div>
-          <div className="flex spacea-x-6">
-            {["GitHub"].map((social) => (
-              <a key={social} href="https://github.com/prithvi1236/fosshack25" className="text-violet-300 hover:text-white transition-colors">
-                {social}
-              </a>
-            ))}
-          </div>
+      <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+        <div className="text-center md:text-left mb-8 md:mb-0">
+          <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-600 mb-2">
+            V2N
+          </h3>
+          <p className="text-violet-300">Transforming video content into actionable insights</p>
         </div>
-      </footer>
+        <div className="flex space-x-6">
+          <a
+            href="https://github.com/prithvi1236/fosshack25"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-violet-300 hover:text-white transition-colors"
+          >
+            <FaGithub className="w-10 h-10" />  {/* Increased size */}
+          </a>
+        </div>
+      </div>
+    </footer>
     </div>
   )
 }

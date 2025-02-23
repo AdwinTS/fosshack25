@@ -86,8 +86,8 @@ def process_youtube_video(data):
             - Return output as a JSON object with `"sections"` as a list.
             - Each section should contain:
               - `"heading"`: The main topic.
-              - `"explanation"`: A brief explanation.
-            - Provide at least 5 sections.
+              - `"explanation"`: A brief explanation of minimum 8 senetences, maximum 15 sentences.
+            - Provide at least 4 sections.
             - Ensure clean JSON output.
             """,
             "stream": False
