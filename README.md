@@ -1,4 +1,4 @@
-# 🎥 YouTube Video Summarizer
+# 🎥 V2N
 
 ## 📌 Overview
 This is a **full-stack application** that extracts, summarizes, and translates **YouTube video transcripts**.
