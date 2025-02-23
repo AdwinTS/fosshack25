@@ -5,55 +5,52 @@ import jsPDF from "jspdf";
 
 export default function SummarizePage() {
   const [videoUrl, setVideoUrl] = useState("");
-  const [segments, setSegments] = useState([]);
+  const [sections, setSections] = useState([]); // Updated to handle sections
   const [loading, setLoading] = useState(false);
 
   const handleGenerate = () => {
     if (!videoUrl.trim()) return;
     setLoading(true);
-    setSegments([]); // Clear previous segments
-  
-    const eventSource = new EventSource(`http://127.0.0.1:5000/process?link=${encodeURIComponent(videoUrl)}`);
-  
-    eventSource.onmessage = (event) => {
-      if (event.data === "done") {
-        eventSource.close();
+    setSections([]); // Clear previous sections
+
+    fetch(`http://127.0.0.1:5000/process?link=${encodeURIComponent(videoUrl)}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "success" && data.sections) {
+          setSections(data.sections); // Set the sections from the response
+        } else {
+          console.error("Invalid response format");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      })
+      .finally(() => {
         setLoading(false);
-        return;
-      }
-  
-      const newSegment = JSON.parse(event.data);
-      setSegments((prevSegments) => [...prevSegments, newSegment]);
-    };
-  
-    eventSource.onerror = () => {
-      eventSource.close();
-      setLoading(false);
-      console.error("Error fetching data");
-    };
+      });
   };
 
   const generatePDF = () => {
     const doc = new jsPDF();
-  
+
     // Set initial position
     let x = 10; // X position (left margin)
     let y = 20; // Y position (starting from the top)
-  
+
     // Set font size for the title
     doc.setFontSize(18);
     doc.text("Video Summary", x, y);
     y += 10; // Move down after the title
-  
+
     // Set font size for the content
     doc.setFontSize(12);
-  
+
     // Helper function to wrap text
     const wrapText = (text, maxWidth) => {
       const words = text.split(" ");
       let lines = [];
       let currentLine = words[0];
-  
+
       for (let i = 1; i < words.length; i++) {
         const word = words[i];
         const width = doc.getTextWidth(currentLine + " " + word);
@@ -67,16 +64,16 @@ export default function SummarizePage() {
       lines.push(currentLine);
       return lines;
     };
-  
-    // Add each segment to the PDF
-    segments.forEach((segment, index) => {
-      // Add segment title
-      doc.text(`Segment ${index + 1}: ${segment.title}`, x, y);
-      y += 10; // Move down after the title
-  
-      // Wrap and add the summary
-      const summaryLines = wrapText(`Summary: ${segment.summary}`, 180); // 180 is the max width
-      summaryLines.forEach((line) => {
+
+    // Add each section to the PDF
+    sections.forEach((section, index) => {
+      // Add section heading
+      doc.text(`Section ${index + 1}: ${section.heading}`, x, y);
+      y += 10; // Move down after the heading
+
+      // Wrap and add the explanation
+      const explanationLines = wrapText(section.explanation, 180); // 180 is the max width
+      explanationLines.forEach((line) => {
         if (y > 280) {
           // Add a new page if the current page is full
           doc.addPage();
@@ -85,16 +82,10 @@ export default function SummarizePage() {
         doc.text(line, x, y);
         y += 10; // Move down after each line
       });
-  
-      // Add timestamp
-      if (y > 280) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(`Timestamp: ${segment.timestamp}`, x, y);
-      y += 15; // Add extra space between segments
+
+      y += 10; // Add extra space between sections
     });
-  
+
     // Save the PDF
     doc.save("video-summary.pdf");
   };
@@ -155,7 +146,7 @@ export default function SummarizePage() {
                   ></path>
                 </svg>
               </div>
-            ) : segments.length > 0 ? (
+            ) : sections.length > 0 ? (
               <>
                 <button
                   onClick={generatePDF}
@@ -164,20 +155,12 @@ export default function SummarizePage() {
                   Download PDF
                 </button>
 
-                {segments.map((segment, index) => (
+                {sections.map((section, index) => (
                   <div key={index} className="mb-4">
-                    <div className="flex justify-center items-center">
-                      <a
-                        className="hover:text-blue-700 underline text-violet-300"
-                        href={segment.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {segment.title}
-                      </a>
-                    </div>
-                    <p className="text-gray-300">{segment.summary}</p>
-                    <p className="text-gray-500">Timestamp: {segment.timestamp}</p>
+                    <h3 className="text-lg font-semibold text-violet-300">
+                      {section.heading}
+                    </h3>
+                    <p className="text-gray-300">{section.explanation}</p>
                   </div>
                 ))}
               </>
