@@ -1,26 +1,146 @@
-# Fosshack Project:v2n
+Since your project includes **Next.js as the frontend** along with Flask, here's an updated **README.md** to reflect the full-stack nature of your summarization project.  
 
-# Overview
-This project aims to streamline the process of extracting audio transcriptions from YouTube videos and converting them into organized lecture notes, seamlessly integrated into our website.
+---
 
-# Main Objective
-# Extract Audio Transcription and Prepare Lecture Notes from YouTube
-- Fetch audio from YouTube videos.  
-- Transcribe the audio using advanced speech-to-text technology.  
-- Format the transcription into structured, readable lecture notes.  
-- Display the notes on our website for easy access.
+# 🎥 YouTube Video Summarizer  
 
-# Add-ons
-# Enable Live Editing
-- Users can edit the generated lecture notes in real-time on the website.  
-- Changes are saved instantly, ensuring a collaborative and dynamic experience.  
+## 📌 Overview  
+This is a **full-stack application** that extracts, summarizes, and translates **YouTube video transcripts**.  
 
-# Add Screenshot If Needed
-- Option to include relevant screenshots (e.g., video thumbnails or key slides) alongside the notes.  
-*[Note: If you'd like a sample screenshot generated for this README, please confirm!]*
+✅ Fetch **YouTube video transcripts**  
+✅ Generate **summarized key points**  
+✅ **Real-time WebSocket updates**  
+✅ **Downloadable PDF** of the summary  
 
-# How It Works
-1. Input a YouTube video URL.  
-2. The system extracts the audio and transcribes it.  
-3. Transcription is processed into concise lecture notes with timestamps.  
-4. Notes are uploaded to the website, ready for viewing and editing.
+Built using:  
+- 🖥 **Backend:** Flask, SocketIO, YouTube Transcript API  
+- 🌐 **Frontend:** Next.js (React)  
+
+---
+
+## 🛠 Installation  
+
+### 🔹 Prerequisites  
+- **Python 3.8+**  
+- **Node.js 16+**  
+- **pip & npm/yarn installed**  
+
+---
+
+### 🔹 Backend (Flask API)  
+
+1️⃣ **Clone the repository**  
+   ```bash
+   git clone https://github.com/your-username/your-repo.git
+   cd your-repo/backend
+   ```  
+
+2️⃣ **Install dependencies**  
+   ```bash
+   pip install -r requirements.txt
+   ```  
+
+3️⃣ **Run the Flask server**  
+   ```bash
+   python app.py
+   ```  
+
+---
+
+### 🔹 Frontend (Next.js)  
+
+1️⃣ **Navigate to frontend directory**  
+   ```bash
+   cd ../frontend
+   ```  
+
+2️⃣ **Install dependencies**  
+   ```bash
+   npm install
+   ```  
+   or  
+   ```bash
+   yarn install
+   ```  
+
+3️⃣ **Run the Next.js app**  
+   ```bash
+   npm run dev
+   ```  
+
+Your frontend will be available at **http://localhost:3000**  
+
+---
+
+## ⚡ Usage  
+
+### 🔹 Fetch & Summarize YouTube Video  
+
+#### **API Endpoint (Flask)**  
+```http
+GET /summarize?video_id=VIDEO_ID
+```  
+#### **Example Request**  
+```bash
+curl "http://127.0.0.1:5000/summarize?video_id=dQw4w9WgXcQ"
+```  
+#### **Response**  
+```json
+{
+  "video_id": "dQw4w9WgXcQ",
+  "summary": [
+    {"heading": "Introduction", "explanation": "The video explains AI's impact on daily life."},
+    {"heading": "Key Takeaways", "explanation": "AI helps in automation and decision-making."}
+  ]
+}
+```  
+
+---
+
+### 🔹 Next.js Frontend Functionality  
+
+- **Paste YouTube URL** to fetch the summary.  
+- **Real-time updates** via WebSockets.  
+- **Download summary as PDF** with structured sections.  
+
+#### **WebSocket Event (`summary_update`)**  
+```json
+{
+  "video_id": "dQw4w9WgXcQ",
+  "sections": [
+    {"heading": "AI Impact", "explanation": "AI is changing industries worldwide."}
+  ]
+}
+```
+---
+
+## 📝 Commit Guidelines  
+- ✅ **Good Examples:**  
+  ```bash
+  feat: add transcript summarization  
+  fix: handle missing subtitles gracefully  
+  refactor: improve summary translation logic  
+  ```  
+- ❌ **Bad Examples:**  
+  ```bash
+  update files  
+  fix bugs  
+  added summary feature  
+  ```
+
+---
+
+## 🤝 Contributing  
+1️⃣ **Fork the repo**  
+2️⃣ **Create a feature branch (`feature-name`)**  
+3️⃣ **Commit your changes**  
+4️⃣ **Push and create a PR**  
+
+---
+
+## 📜 License  
+MIT License  
+
+---
+
+This README now properly reflects both **Flask backend** and **Next.js frontend**, highlighting the **real-time summarization & PDF generation features**. 🚀 Let me know if you'd like any refinements!
