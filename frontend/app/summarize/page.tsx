@@ -49,18 +49,17 @@ export default function SummarizePage() {
     doc.setFontSize(12);
 
     sections.forEach((section, index) => {
-        const headingText = ${index + 1}: ${section.heading};
-        doc.setTextColor(0, 0, 255); // Set color for the link
-        doc.textWithLink(headingText, 10, y, { url: section.link });
-        y += 10;
-        doc.setTextColor(0, 0, 0); // Reset color
-        doc.text(section.explanation, 10, y, { maxWidth: 180 });
-        y += 20;
+      const headingText = `${index + 1}: ${section.heading}`; // ✅ Fixed template literal
+      doc.setTextColor(0, 0, 255); // Set color for the link
+      doc.textWithLink(headingText, 10, y, { url: section.link });
+      y += 10;
+      doc.setTextColor(0, 0, 0); // Reset color
+      doc.text(section.explanation, 10, y, { maxWidth: 180 });
+      y += 20;
     });
 
     doc.save("video-summary.pdf");
-};
-
+  }; // ✅ Function closes properly here
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -97,19 +96,43 @@ export default function SummarizePage() {
 
             {loading ? (
               <div className="flex items-center justify-center h-32">
-                <svg className="animate-spin h-8 w-8 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin h-8 w-8 text-violet-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
               </div>
             ) : sections.length > 0 ? (
               <>
-                <button onClick={generatePDF} className="bg-violet-600 hover:bg-violet-700 px-4 py-2 rounded-md mb-4">
+                <button
+                  onClick={generatePDF}
+                  className="bg-violet-600 hover:bg-violet-700 px-4 py-2 rounded-md mb-4"
+                >
                   Download PDF
                 </button>
                 {sections.map((section, index) => (
                   <div key={index} className="mb-4">
-                    <a href={section.link} target="_blank" rel="noopener noreferrer" className="text-lg font-semibold text-violet-300 underline">
+                    <a
+                      href={section.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-semibold text-violet-300 underline"
+                    >
                       {section.heading}
                     </a>
                     <p className="text-gray-300">{section.explanation}</p>
@@ -117,7 +140,9 @@ export default function SummarizePage() {
                 ))}
               </>
             ) : (
-              <p className="text-gray-300">Your video summary will appear here.</p>
+              <p className="text-gray-300">
+                Your video summary will appear here.
+              </p>
             )}
           </div>
         </div>
