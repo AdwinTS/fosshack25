@@ -139,5 +139,3 @@ MIT License
 
 ---
 
-This README now properly reflects both **Flask backend** and **Next.js frontend**, highlighting the **real-time summarization & PDF generation features**. 🚀 Let me know if you'd like any refinements!
-
