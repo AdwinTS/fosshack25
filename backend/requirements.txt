@@ -1,9 +1,10 @@
-Flask==3.0.2
-flask-socketio==5.3.6
-youtube-transcript-api==0.6.1
+Flask==3.1.0
+Flask-SocketIO==5.5.1
+Flask-Cors==5.0.0
+requests==2.32.3
+yt-dlp==2025.2.19
+youtube-transcript-api==0.6.3
 deep-translator==1.11.4
-requests==2.31.0
-yt-dlp==2024.02.04
 fuzzywuzzy==0.18.0
-flask-cors==4.0.0
-python-socketio==5.9.0
+python-Levenshtein==0.23.0
+groq==0.18.0
