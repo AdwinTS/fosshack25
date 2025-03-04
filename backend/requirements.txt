@@ -8,3 +8,4 @@ deep-translator==1.11.4
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.23.0
 groq==0.18.0
+gunicorn==23.0.0
