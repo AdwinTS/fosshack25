@@ -15,7 +15,7 @@ export default function SummarizePage() {
 
   useEffect(() => {
     // Connect to the backend Socket.IO server
-    const newSocket = io("http://127.0.0.1:5000", {
+    const newSocket = io("https://fosshack25.onrender.com", {
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
