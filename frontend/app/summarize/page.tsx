@@ -14,32 +14,56 @@ export default function SummarizePage() {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const newSocket = io("http://127.0.0.1:5000");
+    // Connect to the backend Socket.IO server
+    const newSocket = io("http://127.0.0.1:5000", {
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
     setSocket(newSocket);
 
-    newSocket.on("status", (data) => setStatus(data.message));
+    // Listen for status updates
+    newSocket.on("status", (data) => {
+      setStatus(data.message);
+      // If the status message indicates completion, clear it after 2 seconds
+      if (data.message === "done") {
+        setTimeout(() => setStatus(""), 2000);
+      }
+    });
+    // Listen for the complete summary event from backend
     newSocket.on("summary", (data) => {
       setTitle(data.title);
-      setSections(data.sections);
+      setSections(data.sections); // Ensure backend sends key "sections"
       setLoading(false);
     });
+
+    // Listen for error events
     newSocket.on("error", (data) => {
       setError(data.error);
       setLoading(false);
     });
 
+    // Optional: if the backend emits a complete event
+    newSocket.on("complete", () => {
+      setLoading(false);
+      setStatus("Summary generation complete.");
+    });
+
     return () => newSocket.disconnect();
   }, []);
 
+  // Handle the generate button click
   const handleGenerate = () => {
     if (!videoUrl.trim()) return;
     setLoading(true);
     setStatus("Connecting to server...");
     setError("");
-
+    // Clear previous data before generating a new summary
+    setSections([]);
+    setTitle("");
     socket.emit("process_video", { link: videoUrl });
   };
 
+  // Generate a PDF of the summary
   const generatePDF = () => {
     const doc = new jsPDF();
     let y = 20;
@@ -49,17 +73,17 @@ export default function SummarizePage() {
     doc.setFontSize(12);
 
     sections.forEach((section, index) => {
-      const headingText = `${index + 1}: ${section.heading}`; // ✅ Fixed template literal
+      const headingText = `${index + 1}: ${section.heading}`;
       doc.setTextColor(0, 0, 255); // Set color for the link
       doc.textWithLink(headingText, 10, y, { url: section.link });
       y += 10;
-      doc.setTextColor(0, 0, 0); // Reset color
+      doc.setTextColor(0, 0, 0); // Reset text color
       doc.text(section.explanation, 10, y, { maxWidth: 180 });
       y += 20;
     });
 
     doc.save("video-summary.pdf");
-  }; // ✅ Function closes properly here
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -94,7 +118,7 @@ export default function SummarizePage() {
             {status && <p className="text-gray-400">{status}</p>}
             {error && <p className="text-red-400">{error}</p>}
 
-            {loading ? (
+            {loading && sections.length === 0 ? (
               <div className="flex items-center justify-center h-32">
                 <svg
                   className="animate-spin h-8 w-8 text-violet-400"
