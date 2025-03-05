@@ -1,86 +1,75 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { io } from "socket.io-client";
+import { useState } from "react";
 import jsPDF from "jspdf";
 
 export default function SummarizePage() {
   const [videoUrl, setVideoUrl] = useState("");
-  const [sections, setSections] = useState([]);
+  const [sections, setSections] = useState(null);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
   const [error, setError] = useState("");
-  const [socket, setSocket] = useState(null);
-
-  useEffect(() => {
-    // Connect to the backend Socket.IO server
-    const newSocket = io("https://fosshack25.onrender.com", {
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
-    setSocket(newSocket);
-
-    // Listen for status updates
-    newSocket.on("status", (data) => {
-      setStatus(data.message);
-      // If the status message indicates completion, clear it after 2 seconds
-      if (data.message === "done") {
-        setTimeout(() => setStatus(""), 2000);
-      }
-    });
-    // Listen for the complete summary event from backend
-    newSocket.on("summary", (data) => {
-      setTitle(data.title);
-      setSections(data.sections); // Ensure backend sends key "sections"
-      setLoading(false);
-    });
-
-    // Listen for error events
-    newSocket.on("error", (data) => {
-      setError(data.error);
-      setLoading(false);
-    });
-
-    // Optional: if the backend emits a complete event
-    newSocket.on("complete", () => {
-      setLoading(false);
-      setStatus("Summary generation complete.");
-    });
-
-    return () => newSocket.disconnect();
-  }, []);
 
   // Handle the generate button click
-  const handleGenerate = () => {
-    if (!videoUrl.trim()) return;
+  const handleGenerate = async () => {
+    if (!videoUrl.trim()) {
+      setError("Please enter a valid YouTube URL");
+      return;
+    }
+
     setLoading(true);
-    setStatus("Connecting to server...");
     setError("");
-    // Clear previous data before generating a new summary
-    setSections([]);
+    setSections(null);
     setTitle("");
-    socket.emit("process_video", { link: videoUrl });
+
+    try {
+      const response = await fetch("https://v2n-backend-server.onrender.com/process_video", {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({ link: videoUrl }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Server error");
+      }
+
+      const data = await response.json();
+      setTitle(data.title);
+      setSections(data.sections || []);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError(err.message || "Failed to fetch data from the server");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Generate a PDF of the summary
   const generatePDF = () => {
     const doc = new jsPDF();
-    let y = 20;
+    let x = 10, y = 20;
     doc.setFontSize(18);
-    doc.text(title, 10, y);
+    doc.text("Video Summary", x, y);
     y += 10;
     doc.setFontSize(12);
 
-    sections.forEach((section, index) => {
-      const headingText = `${index + 1}: ${section.heading}`;
-      doc.setTextColor(0, 0, 255); // Set color for the link
-      doc.textWithLink(headingText, 10, y, { url: section.link });
-      y += 10;
-      doc.setTextColor(0, 0, 0); // Reset text color
-      doc.text(section.explanation, 10, y, { maxWidth: 180 });
-      y += 20;
-    });
+    if (sections) {
+      sections.forEach((section, index) => {
+        if (y > 270) { // Ensure content fits on the page
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(`Section ${index + 1}: ${section.heading}`, x, y);
+        y += 10;
+        doc.text(section.explanation, x, y, { maxWidth: 180 });
+        y += 10;
+      });
+    }
 
     doc.save("video-summary.pdf");
   };
@@ -88,10 +77,7 @@ export default function SummarizePage() {
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="container mx-auto px-4 py-16">
-        <h1 className="text-4xl font-bold mb-8 text-center text-violet-400">
-          Video Summarizer
-        </h1>
-
+        <h1 className="text-4xl font-bold mb-8 text-center text-violet-400">Video Summarizer</h1>
         <div className="max-w-3xl mx-auto bg-violet-900 bg-opacity-20 rounded-lg p-8 backdrop-blur-lg">
           <div className="mb-8 flex items-center space-x-2">
             <input
@@ -104,21 +90,18 @@ export default function SummarizePage() {
             <button
               onClick={handleGenerate}
               disabled={loading}
-              className="bg-violet-600 hover:bg-violet-700 px-4 py-2 rounded-md"
+              className={`px-4 py-2 rounded-md transition ${
+                loading ? "bg-gray-600 cursor-not-allowed" : "bg-violet-600 hover:bg-violet-700"
+              }`}
             >
               {loading ? "Generating..." : "Generate"}
             </button>
           </div>
 
           <div className="bg-black bg-opacity-50 rounded-lg p-6 min-h-[200px]">
-            <h2 className="text-2xl font-semibold mb-4 text-violet-300">
-              {title || "Summary"}
-            </h2>
-
-            {status && <p className="text-gray-400">{status}</p>}
+            <h2 className="text-2xl font-semibold mb-4 text-violet-300">{title || "Summary"}</h2>
             {error && <p className="text-red-400">{error}</p>}
-
-            {loading && sections.length === 0 ? (
+            {loading ? (
               <div className="flex items-center justify-center h-32">
                 <svg
                   className="animate-spin h-8 w-8 text-violet-400"
@@ -126,14 +109,7 @@ export default function SummarizePage() {
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path
                     className="opacity-75"
                     fill="currentColor"
@@ -141,7 +117,7 @@ export default function SummarizePage() {
                   ></path>
                 </svg>
               </div>
-            ) : sections.length > 0 ? (
+            ) : sections ? (
               <>
                 <button
                   onClick={generatePDF}
@@ -164,9 +140,7 @@ export default function SummarizePage() {
                 ))}
               </>
             ) : (
-              <p className="text-gray-300">
-                Your video summary will appear here.
-              </p>
+              <p className="text-gray-300">Your video summary will appear here.</p>
             )}
           </div>
         </div>
