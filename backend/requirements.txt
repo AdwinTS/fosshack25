@@ -1,5 +1,4 @@
 Flask==3.1.0
-Flask-SocketIO==5.5.1
 Flask-Cors==5.0.0
 requests==2.32.3
 yt-dlp==2025.2.19
